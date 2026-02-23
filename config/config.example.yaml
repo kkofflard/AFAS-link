@@ -1,0 +1,59 @@
+# ============================================================
+# AFAS-link Hoofdconfiguratie
+# Kopieer naar config/config.yaml en pas aan voor uw omgeving
+# ============================================================
+
+# AFAS omgevingen (meerdere omgevingen worden ondersteund)
+environments:
+  - name: "Hoofdkantoor"
+    environment_nr: "12345"
+    token_env_var: "AFAS_ENV1_TOKEN"   # Verwijst naar env var met token data
+    enabled: true
+    sync_interval_minutes: 15
+    afas_connector_id: "HrPersonContact"   # GetConnector naam in AFAS Profit
+
+  # Voorbeeld tweede omgeving (bijv. dochteronderneming)
+  # - name: "Dochteronderneming BV"
+  #   environment_nr: "67890"
+  #   token_env_var: "AFAS_ENV2_TOKEN"
+  #   enabled: true
+  #   sync_interval_minutes: 30
+  #   afas_connector_id: "HrPersonContact"
+
+# Microsoft Entra ID (Azure AD) instellingen
+entra_id:
+  tenant_id: "${ENTRA_TENANT_ID}"
+  client_id: "${ENTRA_CLIENT_ID}"
+  client_secret: "${ENTRA_CLIENT_SECRET}"
+  domain: "bedrijf.nl"                     # E-maildomein voor nieuwe accounts
+  licenses:
+    - sku_id: "xxxxx-xxxx-xxxx-xxxx-xxxxxxxx"   # Microsoft 365 licentie SKU ID
+
+# Active Directory (on-premises) instellingen
+active_directory:
+  enabled: false
+  server: "dc.bedrijf.local"
+  port: 636
+  use_ssl: true
+  base_dn: "DC=bedrijf,DC=local"
+  bind_user: "CN=AfasSync,OU=Serviceaccounts,DC=bedrijf,DC=local"
+  bind_password_env_var: "AD_BIND_PASSWORD"
+  disabled_ou: "OU=Uitdienstgetreden,DC=bedrijf,DC=local"
+
+# Naamgevingsregels voor e-mailadressen en gebruikersnamen
+naming:
+  # Primair patroon
+  # Beschikbare variabelen: {initials}, {firstname}, {lastname}, {domain}, {n}
+  pattern: "{initials}.{lastname}@{domain}"
+  # Fallback patronen bij duplicaten (worden in volgorde geprobeerd)
+  fallback_patterns:
+    - "{initials}.{lastname}{n}@{domain}"
+    - "{firstname}.{lastname}@{domain}"
+    - "{firstname}.{lastname}{n}@{domain}"
+  # Gebruikersnaampatroon (zonder domein, voor AD sAMAccountName)
+  username_pattern: "{initials}.{lastname}"
+
+# Synchronisatie-instellingen
+sync:
+  full_sync_cron: "0 2 * * *"   # Volledige sync elke dag om 02:00
+  max_workers: 5                  # Maximaal gelijktijdige provisioning-taken

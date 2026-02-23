@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Synchronisatielogs{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3 fw-bold"><i class="bi bi-journal-text me-2 text-primary"></i>Synchronisatielogs</h1>
+        <p class="text-muted">{{ total }} logregels gevonden</p>
+    </div>
+</div>
+
+<!-- Filterformulier -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" action="/logs" class="row g-2">
+            <div class="col-md-4">
+                <select class="form-select" name="status">
+                    <option value="">Alle statussen</option>
+                    {% for s in statuses %}
+                    <option value="{{ s }}" {% if s == status_filter %}selected{% endif %}>
+                        {{ {'success': 'Geslaagd', 'error': 'Fout', 'warning': 'Waarschuwing', 'info': 'Info'}.get(s, s) | title }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" name="action">
+                    <option value="">Alle acties</option>
+                    {% for a in actions %}
+                    <option value="{{ a }}" {% if a == action_filter %}selected{% endif %}>
+                        {{ a | replace('_', ' ') | title }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel me-1"></i>Filteren
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a href="/logs" class="btn btn-outline-secondary w-100">Wis filters</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Logtabel -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:150px">Tijdstip</th>
+                        <th>Actie</th>
+                        <th>Doel</th>
+                        <th>Status</th>
+                        <th>Bericht</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="text-muted small">
+                            {{ log.timestamp.strftime('%d-%m-%Y') }}<br>
+                            <strong>{{ log.timestamp.strftime('%H:%M:%S') }}</strong>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">
+                                {% set action_labels = {
+                                    'provision': 'Provisioning',
+                                    'update': 'Bijwerken',
+                                    'deprovision': 'Deprovisioning',
+                                    'group_assign': 'Groep toewijzen',
+                                    'group_remove': 'Groep verwijderen',
+                                    'license_assign': 'Licentie toewijzen',
+                                    'license_revoke': 'Licentie intrekken',
+                                    'ou_move': 'OU verplaatsen',
+                                    'sync_start': 'Sync gestart',
+                                    'sync_complete': 'Sync voltooid'
+                                } %}
+                                {{ action_labels.get(log.action.value, log.action.value) }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if log.target.value == 'entra_id' %}
+                            <span class="text-info"><i class="bi bi-cloud me-1"></i>Entra ID</span>
+                            {% elif log.target.value == 'active_directory' %}
+                            <span class="text-warning"><i class="bi bi-server me-1"></i>Active Directory</span>
+                            {% else %}
+                            <span class="text-secondary"><i class="bi bi-gear me-1"></i>Systeem</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.status.value == 'success' %}
+                            <span class="badge bg-success">Geslaagd</span>
+                            {% elif log.status.value == 'error' %}
+                            <span class="badge bg-danger">Fout</span>
+                            {% elif log.status.value == 'warning' %}
+                            <span class="badge bg-warning text-dark">Waarschuwing</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Info</span>
+                            {% endif %}
+                        </td>
+                        <td class="small">
+                            {{ log.message or '—' }}
+                            {% if log.details %}
+                            <button class="btn btn-link btn-sm p-0 ms-1" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#details-{{ log.id }}">
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                            <div class="collapse mt-1" id="details-{{ log.id }}">
+                                <pre class="bg-light p-2 rounded small">{{ log.details | tojson(indent=2) }}</pre>
+                            </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-5">
+                            <i class="bi bi-journal-x fs-1 d-block mb-2"></i>
+                            Geen logregels gevonden
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Paginering -->
+    {% if total_pages > 1 %}
+    <div class="card-footer bg-white border-0">
+        <nav>
+            <ul class="pagination pagination-sm justify-content-center mb-0">
+                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ page - 1 }}&status={{ status_filter }}&action={{ action_filter }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% for p in range(1, total_pages + 1) %}
+                {% if p == page or (p >= page - 2 and p <= page + 2) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="?page={{ p }}&status={{ status_filter }}&action={{ action_filter }}">{{ p }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+                <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ page + 1 }}&status={{ status_filter }}&action={{ action_filter }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

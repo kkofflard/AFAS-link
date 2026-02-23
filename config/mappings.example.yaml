@@ -1,0 +1,92 @@
+# ============================================================
+# AFAS-link Mappingconfiguratie
+# Kopieer naar config/mappings.yaml en pas aan voor uw omgeving
+# ============================================================
+
+# Attribuutmapping: AFAS veldnamen → interne veldnamen
+# transform opties: none, lowercase, uppercase, date_iso, strip
+attribute_mapping:
+  - afas_field: "Nm"
+    internal_field: "last_name"
+    transform: none
+
+  - afas_field: "VoornaamVolledig"
+    internal_field: "first_name"
+    transform: none
+
+  - afas_field: "Initialen"
+    internal_field: "initials"
+    transform: none
+
+  - afas_field: "FunctionDescription"
+    internal_field: "function"
+    transform: none
+
+  - afas_field: "DepartmentDescription"
+    internal_field: "department"
+    transform: none
+
+  - afas_field: "TeamDescription"
+    internal_field: "team"
+    transform: none
+
+  - afas_field: "CostCenterDescription"
+    internal_field: "cost_center"
+    transform: none
+
+  - afas_field: "StartDate"
+    internal_field: "start_date"
+    transform: date_iso
+
+  - afas_field: "EndDate"
+    internal_field: "end_date"
+    transform: date_iso
+
+  - afas_field: "EmId"
+    internal_field: "afas_employee_id"
+    transform: none
+
+# Groepsmapping: wijs groepen toe op basis van AFAS-attribuutwaarden
+group_mappings:
+  # Entra ID groep op basis van afdeling
+  - afas_field: "department"
+    afas_value: "ICT"
+    target: "entra_id"
+    group_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    group_name: "GRP-ICT"
+
+  - afas_field: "department"
+    afas_value: "HR"
+    target: "entra_id"
+    group_id: "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy"
+    group_name: "GRP-HR"
+
+  # Active Directory groep op basis van functie
+  - afas_field: "function"
+    afas_value: "Manager"
+    target: "active_directory"
+    group_dn: "CN=Managers,OU=Groepen,DC=bedrijf,DC=local"
+
+  # Iedereen in de groep Medewerkers
+  - afas_field: "*"
+    afas_value: "*"
+    target: "entra_id"
+    group_id: "zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz"
+    group_name: "GRP-Alle-Medewerkers"
+
+# OU-toewijzing voor Active Directory
+ou_mappings:
+  - afas_field: "department"
+    afas_value: "ICT"
+    ou: "OU=ICT,OU=Medewerkers,DC=bedrijf,DC=local"
+
+  - afas_field: "department"
+    afas_value: "HR"
+    ou: "OU=HR,OU=Medewerkers,DC=bedrijf,DC=local"
+
+  - afas_field: "department"
+    afas_value: "Finance"
+    ou: "OU=Finance,OU=Medewerkers,DC=bedrijf,DC=local"
+
+  # Standaard OU als geen specifieke match gevonden is
+  - default: "OU=Medewerkers,DC=bedrijf,DC=local"
