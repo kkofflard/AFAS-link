@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Omgevingsvariabelen en secrets
+.env
+!.env.example
+
+# Azure deployment parameters (bevatten secrets!)
+infra/parameters.json
+!infra/parameters.example.json
+
+# Config (bevat mogelijk secrets)
+config/config.yaml
+!config/config.example.yaml
+config/mappings.yaml
+!config/mappings.example.yaml
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store

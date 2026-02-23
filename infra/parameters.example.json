@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "westeurope"
+    },
+    "environmentName": {
+      "value": "prod"
+    },
+    "appName": {
+      "value": "afaslink"
+    },
+    "postgresAdminUser": {
+      "value": "afaslink_admin"
+    },
+    "postgresAdminPassword": {
+      "value": "VERVANG_DIT_MET_STERK_WACHTWOORD"
+    },
+    "afasToken": {
+      "value": "VERVANG_DIT_MET_AFAS_TOKEN_DATA"
+    },
+    "entraTenantId": {
+      "value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    },
+    "entraClientId": {
+      "value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    },
+    "entraClientSecret": {
+      "value": "VERVANG_DIT_MET_CLIENT_SECRET"
+    },
+    "emailDomain": {
+      "value": "uwbedrijf.nl"
+    }
+  }
+}

@@ -1,0 +1,76 @@
+name: Deploy naar Azure Container Apps
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:    # Handmatig starten via GitHub UI
+
+env:
+  # Pas deze waarden aan voor uw Azure-omgeving
+  AZURE_RESOURCE_GROUP: afaslink-prod-rg
+  CONTAINER_APP_NAME: afaslink-prod-app
+  ACR_NAME: afaslinkprodacr          # Naam van uw Azure Container Registry
+  IMAGE_NAME: afaslink
+
+jobs:
+  build-and-deploy:
+    name: Build, push en deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Code ophalen
+        uses: actions/checkout@v4
+
+      - name: Aanmelden bij Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Aanmelden bij Azure Container Registry
+        run: |
+          az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Docker image bouwen en pushen
+        run: |
+          IMAGE_TAG="${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          IMAGE_LATEST="${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest"
+
+          docker build -t "$IMAGE_TAG" -t "$IMAGE_LATEST" .
+          docker push "$IMAGE_TAG"
+          docker push "$IMAGE_LATEST"
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Container App updaten
+        run: |
+          az containerapp update \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --image ${{ env.IMAGE_TAG }}
+
+      - name: Deployment verificeren
+        run: |
+          # Wacht tot de deployment klaar is en controleer de health endpoint
+          sleep 30
+          APP_URL=$(az containerapp show \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query "properties.configuration.ingress.fqdn" \
+            --output tsv)
+
+          echo "Applicatie URL: https://$APP_URL"
+          curl --fail --silent "https://$APP_URL/api/health" | python3 -m json.tool
+
+      - name: Deployment-samenvatting
+        if: success()
+        run: |
+          APP_URL=$(az containerapp show \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query "properties.configuration.ingress.fqdn" \
+            --output tsv)
+          echo "### Deployment geslaagd" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image:** \`${{ env.IMAGE_TAG }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** https://$APP_URL" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dashboard:** https://$APP_URL/" >> $GITHUB_STEP_SUMMARY
