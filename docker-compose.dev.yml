@@ -1,0 +1,15 @@
+version: "3.9"
+
+# Development override – gebruik met: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+services:
+  afaslink:
+    build:
+      context: .
+      target: base
+    volumes:
+      - .:/app          # Live code reloading via bind mount
+      - /app/__pycache__
+    environment:
+      - DEMO_MODE=true
+      - LOG_LEVEL=DEBUG
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

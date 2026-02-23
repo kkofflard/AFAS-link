@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  afaslink:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - afaslink_data:/app/data
+      - ./config:/app/config:ro
+    environment:
+      - DATABASE_URL=sqlite:////app/data/afas_link.db
+      - CONFIG_PATH=/app/config/config.yaml
+      - LOG_LEVEL=INFO
+      # Voeg AFAS-tokens toe via .env bestand of omgevingsvariabelen:
+      # - AFAS_ENV1_TOKEN=jouw_token_hier
+      # Entra ID (indien niet in config.yaml):
+      # - ENTRA_CLIENT_SECRET=jouw_secret_hier
+      # Active Directory (indien ingeschakeld):
+      # - AD_BIND_PASSWORD=jouw_wachtwoord_hier
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/api/health').raise_for_status()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  afaslink_data:
